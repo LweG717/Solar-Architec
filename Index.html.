@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Cell Architect v2.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --primary: #27ae60; --secondary: #2c3e50; --accent: #e67e22; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; width: 100%; max-width: 600px; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: var(--secondary); margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #7f8c8d; font-size: 0.9em; margin-bottom: 25px; }
+        
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85em; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
+        .visual-container { margin: 25px 0; text-align: center; background: #eee; padding: 20px; border-radius: 10px; min-height: 150px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        #cell-preview { background: rgba(230, 126, 34, 0.6); border: 2px solid var(--accent); transition: 0.3s; }
+        
+        .btn-stack { display: flex; gap: 10px; margin-top: 20px; }
+        button { flex: 1; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .calc-btn { background: var(--primary); color: white; }
+        .pdf-btn { background: var(--secondary); color: white; }
+        
+        .support-banner { margin-top: 30px; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+        .coffee-link { display: inline-block; background: #ffdd00; color: black; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card" id="app-content">
+    <h1>Solar Architect <span style="color:var(--primary)">2.0</span></h1>
+    <p class="subtitle">Design your DIY energy project in seconds.</p>
+
+    <div class="input-group">
+        <label>Select Material Type</label>
+        <select id="material">
+            <option value="0.0001">Cuprous Oxide (Home Baked - 0.01%)</option>
+            <option value="0.005">Berry Juice / DSSC (Transparent - 0.5%)</option>
+            <option value="0.15">Commercial Silicon (For Reference - 15%)</option>
+        </select>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+        <div class="input-group" style="flex:1;">
+            <label>LED Voltage (V)</label>
+            <input type="number" id="v_led" value="2.0" step="0.1">
+        </div>
+        <div class="input-group" style="flex:1;">
+            <label>LED Current (A)</label>
+            <input type="number" id="i_led" value="0.02" step="0.001">
+        </div>
+    </div>
+
+    <button class="calc-btn" onclick="updateTool()">Generate Visual Design</button>
+
+    <div class="visual-container">
+        <div id="cell-preview" style="width: 50px; height: 50px;"></div>
+        <p id="size-label" style="margin-top:10px; font-weight:bold;"></p>
+    </div>
+
+    <div class="btn-stack">
+        <button class="pdf-btn" onclick="downloadBlueprint()">Download Blueprint PDF</button>
+    </div>
+
+    <div class="support-banner">
+        <p style="font-size: 0.85em; margin-bottom: 10px;">Was this blueprint helpful for your project?</p>
+        <a href="https://www.buymeacoffee.com/YOUR_USERNAME" class="coffee-link" target="_blank">☕ Tip $1 for the Math</a>
+    </div>
+</div>
+
+<script>
+    function updateTool() {
+        const v = parseFloat(document.getElementById('v_led').value);
+        const i = parseFloat(document.getElementById('i_led').value);
+        const eff = parseFloat(document.getElementById('material').value);
+        const sun = 1000; // Standard Sunlight W/m2
+
+        // Area in m2 = Power / (Sun * Efficiency)
+        const area_m2 = (v * i) / (sun * eff);
+        const area_cm2 = area_m2 * 10000;
+        const side_cm = Math.sqrt(area_cm2);
+
+        // Update the Visual Preview (Scaling 1cm to 10px for screen)
+        const preview = document.getElementById('cell-preview');
+        const pixels = side_cm * 10;
+        preview.style.width = pixels + "px";
+        preview.style.height = pixels + "px";
+
+        // Update Text
+        document.getElementById('size-label').innerText = 
+            `Required Size: ${side_cm.toFixed(1)}cm x ${side_cm.toFixed(1)}cm (${area_cm2.toFixed(1)} cm²)`;
+    }
+
+    function downloadBlueprint() {
+        const element = document.getElementById('app-content');
+        const opt = {
+            margin: 0.5,
+            filename: 'My_Solar_Blueprint.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+</script>
+
+</body>
+</html>
